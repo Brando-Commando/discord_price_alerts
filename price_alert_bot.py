@@ -27,6 +27,13 @@ Optional Phase B:
 import discord
 import os
 from dotenv import load_dotenv
+import random
+from discord.ext import commands
+import wikipedia
+from bs4 import BeautifulSoup
+import requests
+import json
+import time
 
 
 # This helps grab data from the .env file.
@@ -36,22 +43,92 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-client = discord.Client()
 
+# Prefix the bot will need to recognize commands
+bot = commands.Bot(command_prefix='!')
+
+# on_ready(): means on bot startup and connection
+
+############################
+####### BOT COMMANDS #######
+############################
+
+
+############################
+# PRICE CHECK COMMAND
+############################
+
+# This command will be structured like "!check Bitcoin" and will return a price.
+@bot.command(name='check')
+async def response(ctx, searchname):
+
+    # This first checks a crypto currency site for the search name.
+    search = requests.get("https//coinmarketcap.com/currencies/" + searchname)
+
+    search = BeautifulSoup(search.content, 'html.parser')
+
+    raw_result = soup.prettify()
+
+
+
+
+
+
+    await ctx.send(raw_result)
+
+############################
+# ASSIGN COMMAND
+############################
+
+# This command is to assign a stock or crypto to be monitored
+# WIP
+
+'''
+@bot.command(name='assign')
+async def response(ctx):
+'''
+
+
+
+
+
+
+
+############################
+# COMMANDS FROM CLIENT METHOD
+# NO LONGER IN USE
+############################
+'''
 @client.event
-async def on_ready():
+async def on_error(event, *args, **kwargs):
+    with open('err.log', 'a') as f:
+        if event == 'on_message':
+            f.write(f'Unhandled message: {args[0]}\n')
+        else:
+            raise
+'''
+'''
+async def response(ctx):
     print(f'{client.user} has connected to Discord!')
 
 
-    
+    # This next line of code replaces the following commented code
+    ''' '''
     for guild in client.guilds:
         if guild.name == GUILD:
             break
+    ''' '''
+    # get() takes iterable and keyword arguments, all must be satisfied for a returned element. 
+    # in this case, name=GUILD is the argument that must be satisfied, this is essentially the same as the above code.
+    # No changes in functionality, just cleaner.
+
+    guild = discord.utils.get(client.guilds, name=GUILD)
         
     print(
         f'{client.user} is connected to the following guild:\n'
         f'{guild.name}(id: {guild.id})'
-    )
-    
 
-client.run(TOKEN)
+'''
+
+# Bot token required for start.
+bot.run(TOKEN)
