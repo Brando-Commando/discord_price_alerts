@@ -24,16 +24,15 @@ Optional Phase B:
 
 '''
 
-import discord
 import os
 from dotenv import load_dotenv
 import random
 from discord.ext import commands
-import wikipedia
-from bs4 import BeautifulSoup
 import requests
 import json
 import time
+import yfinance as yahooFinance
+
 
 
 # This helps grab data from the .env file.
@@ -45,7 +44,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 
 
 # Prefix the bot will need to recognize commands
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='-')
 
 # on_ready(): means on bot startup and connection
 
@@ -59,22 +58,29 @@ bot = commands.Bot(command_prefix='!')
 ############################
 
 # This command will be structured like "!check Bitcoin" and will return a price.
-@bot.command(name='check')
-async def response(ctx, searchname):
+@bot.command(name='check', help='This checks the current price of a security. Use the symbol (TSLA, AAPL) for a crypto, use symbol and end with -USD (BTC-USD, MANA-USD).')
+async def response(ctx, search_name):
 
-    # This first checks a crypto currency site for the search name.
-    search = requests.get("https//coinmarketcap.com/currencies/" + searchname)
+    # Tickers are a value of the stock symbol, so TSLA, AAPL, etc is a ticker.
+    try: 
+        ticker = yahooFinance.Ticker(search_name)
+        current_data = ticker.history(period='id')
+        # Rounds to two decimal places
+        current_data = round(current_data['Close'][0], 3)
+        # Adds comma to help format the number
+        current_data = ('{:,}'.format(current_data))
 
-    search = BeautifulSoup(search.content, 'html.parser')
+        # Return message
+        message = (search_name + " has been last reported at $" + str(current_data))
+        await ctx.send(message)
 
-    raw_result = soup.prettify()
+    # Error message
+    except: 
+        await ctx.send("That was not a valid security/crypto, for a security use their symbol, for crypto end with -USD.")
 
 
 
-
-
-
-    await ctx.send(raw_result)
+'''        
 
 ############################
 # ASSIGN COMMAND
@@ -83,52 +89,52 @@ async def response(ctx, searchname):
 # This command is to assign a stock or crypto to be monitored
 # WIP
 
-'''
+
 @bot.command(name='assign')
-async def response(ctx):
-'''
+async def response(ctx, search_name, time_delay: int, time_delay_type: str):
+
+    try:
+        ticker = yahooFinance.Ticker(search_name)
+
+        while True:
+
+            # Time_delay = integer, time_delay_type = minutes or hour
+
+            if time_delay_type == "hour" or "hours":
+                delay_type = 3600
+                
+
+            elif time_delay_type == "minute" or "minutes":
+                delay_type = 60
+                
+
+            else: 
+                await ctx.send("That was not a valid measure of time.")
 
 
+            current_data = ticker.history(period='id')
+            # Rounds to two decimal places
+            current_data = round(current_data['Close'][0], 3)
+            # Adds comma to help format the number
+            current_data = ('{:,}'.format(current_data))
 
+            message = (search_name + " has been last reported at $" + str(current_data))
+            await ctx.send(message)
 
+            reminder_message = ("We will update you every " + time_delay + " " + time_delay_type)
+            await ctx.send(reminder_message)
 
-
-
-############################
-# COMMANDS FROM CLIENT METHOD
-# NO LONGER IN USE
-############################
-'''
-@client.event
-async def on_error(event, *args, **kwargs):
-    with open('err.log', 'a') as f:
-        if event == 'on_message':
-            f.write(f'Unhandled message: {args[0]}\n')
-        else:
-            raise
-'''
-'''
-async def response(ctx):
-    print(f'{client.user} has connected to Discord!')
-
-
-    # This next line of code replaces the following commented code
-    ''' '''
-    for guild in client.guilds:
-        if guild.name == GUILD:
-            break
-    ''' '''
-    # get() takes iterable and keyword arguments, all must be satisfied for a returned element. 
-    # in this case, name=GUILD is the argument that must be satisfied, this is essentially the same as the above code.
-    # No changes in functionality, just cleaner.
-
-    guild = discord.utils.get(client.guilds, name=GUILD)
+            # Time delay function
+            time.sleep(time_delay * delay_type)
         
-    print(
-        f'{client.user} is connected to the following guild:\n'
-        f'{guild.name}(id: {guild.id})'
+    except:    
+        await ctx.send("That was not a valid security/crypto, for a security use their symbol, for crypto end with -USD.")
+
 
 '''
+
+
+
 
 # Bot token required for start.
 bot.run(TOKEN)
