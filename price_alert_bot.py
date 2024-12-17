@@ -8,6 +8,9 @@ Phase A: Simply getting the bot online, and able to connect to a GUILD.
 ### Complete ###
 
 Phase B: Implementing either an actual API or a webscraping API to gather data with a hardcoded currency to watch and monitor. 
+    Currently I can have it set a time to reoccuringly update the user. 
+    Next is to have the user be able to either stop a specific ticker or to stop all updates.
+    Also crypto currency does not currently work the same with yFinance. Must continue experimenting or find an alternative.
 
 Phase C: Work on taking user input on what to monitor, either through private messaging or a chat channel.
 
@@ -27,7 +30,8 @@ Optional Phase B:
 import os
 from dotenv import load_dotenv
 from discord.ext import commands
-from numpy import true_divide
+# from numpy import true_dividepip
+import discord
 import asyncio
 import yfinance as yahooFinance
 import traceback
@@ -41,15 +45,36 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
+intents = discord.Intents(messages=True, guilds=True, reactions=True)
+
 
 # Prefix the bot will need to recognize commands
-bot = commands.Bot(command_prefix='-')
+bot = commands.Bot(command_prefix='-', intents=intents)
 
 # on_ready(): means on bot startup and connection
+
+
+
 
 ############################
 ####### BOT COMMANDS #######
 ############################
+
+
+############################
+####### Stop COMMAND #######
+############################
+# def break_command_loop():
+    
+
+############################
+# ONLINE TERMINAL NOTIFICATION
+############################
+
+# This will send a message to the terminal to verify bot has connected and is online.
+@bot.event
+async def on_ready():
+    print(f'Bot connected as {bot.user}')
 
 
 ############################
@@ -63,15 +88,18 @@ async def response(ctx, search_name):
     # Tickers are a value of the stock symbol, so TSLA, AAPL, etc is a ticker.
     try: 
         ticker = yahooFinance.Ticker(search_name)
-        current_data = ticker.history(period='id')
+        current_data = ticker.info['currentPrice']
+
+    # The following is depcrecated following an update with yFinance: 
         # Rounds to two decimal places
-        current_data = round(current_data['Close'][0], 3)
+        #current_data = round(current_data['Close'][0], 3)
         # Adds comma to help format the number
-        current_data = ('{:,}'.format(current_data))
+        #current_data = ('{:,}'.format(current_data))
 
         # Return message
         # message = (search_name + " has been last reported at $" + str(current_data))
-        message = ("```bash\n" + ' "' + search_name + " has been last reported at $ " + str(current_data) + '"' + ' ```')
+
+        message = ("```bash\n" + ' "' + search_name + " has been last reported at $" + str(current_data) + '"' + ' ```')
 
         await ctx.send(message)
 
@@ -121,11 +149,11 @@ async def response(ctx, search_name, time_delay: int, time_delay_type):
 
 
         while True:
-            current_data = ticker.history(period='id')
+            current_data = ticker.info['currentPrice']
             # Rounds to two decimal places
-            current_data = round(current_data['Close'][0], 3)
+            #current_data = round(current_data['Close'][0], 3)
             # Adds comma to help format the number
-            current_data = ('{:,}'.format(current_data))
+            #current_data = ('{:,}'.format(current_data))
 
 
             # the ```bash\n is what formats the text into cyan and a codeblock, the extra " is needed to format text. 
@@ -133,8 +161,8 @@ async def response(ctx, search_name, time_delay: int, time_delay_type):
                 # ```bash 
                 #   "test message"
                 # ```
-            # this is recreating the format in text.
-            message = ("```bash\n" + ' "' + search_name + " has been last reported at $ " + str(current_data) + '"' + ' ```')
+            # this is recreating the format in text. Also, $ without a space between it and an integer will cause it to be more blue.
+            message = ("```bash\n" + ' "' + search_name + " has been last reported at $" + str(current_data) + '"' + ' ```')
             await ctx.send(message)
 
 
@@ -159,6 +187,34 @@ async def response(ctx, search_name, time_delay: int, time_delay_type):
 ############################
 # 
 ############################
+
+
+############################
+# TEST COMMAND
+############################
+
+# This is just to check API returns and experiment to ensure bot is still functioning as expected.
+@bot.command(name='test', help='This checks the current price of a security. Use the symbol (TSLA, AAPL) for a crypto, use symbol and end with -USD (BTC-USD, MANA-USD).')
+async def response(ctx, search_name):
+
+    # Tickers are a value of the stock symbol, so TSLA, AAPL, etc is a ticker.
+    try:
+        ticker = yahooFinance.Ticker(search_name)
+        current_data = ticker.info['currentPrice']
+        # Rounds to two decimal places
+
+        # Return message
+        # message = (search_name + " has been last reported at $" + str(current_data))
+        message = (current_data)
+
+
+    except:
+        ticker = yahooFinance.Ticker(search_name)
+        current_data = ticker.history('1d')
+
+        message = (current_data)
+
+    await ctx.send(message)
 
 
 # Bot token required for start.
